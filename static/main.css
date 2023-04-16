@@ -1,0 +1,21 @@
+body {
+  background-color: white;
+}
+
+h1 {
+  color: black;
+    font-family: Helvetica;
+  text-align: center;
+}
+
+h2 {
+  color : black;
+font-family: Helvetica;
+text-align: center;}
+
+p {color: black
+  font-family: Serif;
+  font-size: 20px;
+  max-width: 75ch;
+  text-align: center;
+}

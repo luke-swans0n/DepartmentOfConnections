@@ -14,14 +14,26 @@ from twilio.rest import Client
 import json
 from flask import Flask
 import os
-
-
+from flask import Flask
+from flaskext.mysql import MySQL
+import pandas as pd
+import numpy as np
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
+mysql = MySQL()
+app.config['MYSQL_DATABASE_USER'] = 'deptofconnection'
+app.config['MYSQL_DATABASE_PASSWORD'] = 'C10H15n!!'
+app.config['MYSQL_DATABASE_DB'] = 'cookcounty'
+app.config['MYSQL_DATABASE_HOST'] = 'deptofconnections.mysql.pythonanywhere-services.com'
+mysql.init_app(app)
 
-@app.route('/', methods=['POST'])
+@app.route('/', methods=['POST', "GET"])
 def home():
+    return render_template("./home.html")
+
+@app.route('/intake', methods=['POST'])
+def intake():
     response = VoiceResponse()
     response.play("", digits='wwwwwwwwwwwwwwwwwwwwwwwwww0w0')
     response.play("", digits='wwwwwwwwwwwwwwwwwwwwwwwwwwwwww0')
@@ -31,8 +43,6 @@ def home():
         g.say("Please enter a 10-digit phone number to send a message to.",
               voice="alice", language="en-GB", loop=4)
     return str(response)
-
-
 @app.route('/send_sms', methods=['POST'])
 def send_sms():
     phone_number = session['phone_number']
@@ -65,25 +75,37 @@ def sent_sms():
     phone_number = session['phone_number']
     username = session['username']
     message = request.form['SpeechResult']
-    preamble = f'Hello this is The Department of Connections, a messaging service for people stuck in the Cook County Department of Corrections. We have received the following message for you from {username}: '
-    postmessage = """To keep this service running, we ask that you donate $1 via CashApp to $polynomial (Luke Swanson). We are not officially affiliated with Cook County, the Department of Corrections, or any other governmental entity."""
+
+
     client = Client(account, auth_token)
-    client.messages.create(
-        messaging_service_sid='MGde22decc327802a222043e6fd3b6a1ca',
-        body=preamble,
-        to=f'+1{phone_number}')
+
     client.messages.create(
         messaging_service_sid='MGde22decc327802a222043e6fd3b6a1ca',
         body=message,
         to=f'+1{phone_number}')
     client.messages.create(
         messaging_service_sid='MGde22decc327802a222043e6fd3b6a1ca',
-        body=postmessage,
+        body=1,
         to=f'+1{phone_number}')
     response = VoiceResponse()
     response.say("Message Sent.")
     return str(response)
 
+
+
+
+def _db_phone_check(phone_number):
+    curr = mysql.connection.cursor()
+    results = curr.execute(f"SELECT number FROM recipients WHERE phone_number={phone_number}")
+
+def _send_preamble(client, username, phone_number):
+    preamble = f'Hello this is The Department of Connections, a messaging service for people stuck in the Cook County Department of Corrections. We have received the following message for you from {username}: '
+    client.messages.create(
+        messaging_service_sid='MGde22decc327802a222043e6fd3b6a1ca',
+        body=preamble,
+        to=f'+1{phone_number}')
+def _send_free_postmessage():
+    postmessage = """To keep this service running, we ask that you donate $1 via CashApp to $polynomial (Luke Swanson). We are not officially affiliated with Cook County, the Department of Corrections, or any other governmental entity."""
 
 if __name__ == "__main__":
     app.secret_key = os.urandom(24)
